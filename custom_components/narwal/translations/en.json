@@ -57,6 +57,9 @@
       },
       "shutdown": {
         "name": "Shut down"
+      },
+      "reboot": {
+        "name": "Reboot"
       }
     },
     "camera": {

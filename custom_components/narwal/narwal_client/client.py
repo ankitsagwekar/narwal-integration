@@ -27,6 +27,7 @@ from .const import (
     TOPIC_CMD_GET_DEVICE_INFO,
     TOPIC_CMD_GET_MAP,
     TOPIC_CMD_PAUSE,
+    TOPIC_CMD_REBOOT,
     TOPIC_CMD_RECALL,
     TOPIC_CMD_RESUME,
     TOPIC_CMD_SET_FAN_LEVEL,
@@ -444,6 +445,28 @@ class NarwalClient:
 
     async def locate(self) -> CommandResponse:
         return await self.send_command(TOPIC_CMD_YELL)
+
+    async def reboot(self) -> CommandResponse | None:
+        """Reboot the vacuum.
+
+        Wakes the vacuum first (it ignores commands in deep sleep), then sends
+        common/reboot and waits briefly for a reply.  Returns the response,
+        or None if none arrived — the robot may restart before answering.
+        """
+        await self.notify_active()
+        await asyncio.sleep(2)
+        try:
+            resp = await self.send_command(TOPIC_CMD_REBOOT, timeout=5.0)
+        except NarwalCommandError:
+            _LOGGER.warning(
+                "No response to reboot — vacuum may be restarting, "
+                "or ignored it (asleep)"
+            )
+            return None
+        _LOGGER.info(
+            "Reboot response: code=%s raw=%s", resp.result_code, resp.raw.hex(),
+        )
+        return resp
 
     async def shutdown(self) -> CommandResponse | None:
         """Power off the vacuum.

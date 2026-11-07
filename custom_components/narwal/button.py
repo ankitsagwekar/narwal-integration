@@ -26,6 +26,7 @@ async def async_setup_entry(
     async_add_entities([
         NarwalLocateButton(coordinator),
         NarwalWakeButton(coordinator),
+        NarwalRebootButton(coordinator),
         NarwalShutdownButton(coordinator),
     ])
 
@@ -65,6 +66,27 @@ class NarwalWakeButton(NarwalEntity, ButtonEntity):
         """Send active_robot_publish to wake the vacuum."""
         await self.coordinator.client.notify_active()
         _LOGGER.info("Sent wake (active_robot) notification")
+
+
+class NarwalRebootButton(NarwalEntity, ButtonEntity):
+    """Reboot the vacuum."""
+
+    _attr_translation_key = "reboot"
+    _attr_icon = "mdi:restart"
+
+    def __init__(self, coordinator: NarwalCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.data['device_name']}_reboot"
+        )
+
+    async def async_press(self) -> None:
+        """Send common/reboot to restart the vacuum."""
+        resp = await self.coordinator.client.reboot()
+        if resp is not None and not resp.success:
+            raise HomeAssistantError(
+                f"Vacuum refused reboot (code={resp.result_code})."
+            )
 
 
 class NarwalShutdownButton(NarwalEntity, ButtonEntity):
