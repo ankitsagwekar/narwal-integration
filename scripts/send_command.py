@@ -6,6 +6,7 @@ Usage:
          NARWAL_PRODUCT_KEY=... NARWAL_DEVICE_ID=...
   python scripts/send_command.py config/get
   python scripts/send_command.py common/get_device_info --wait 20
+  python scripts/send_command.py config/get --extra 0801   # append field 1 = 1
 
 The vacuum is woken first (active_robot_publish) because it ignores
 commands while in deep sleep.  Use --no-wake to skip that.
@@ -85,6 +86,8 @@ def main() -> None:
                         help="Command topic suffix (default: config/get)")
     parser.add_argument("--wait", type=float, default=15.0,
                         help="Seconds to wait for the response (default: 15)")
+    parser.add_argument("--extra", default="",
+                        help="Hex bytes appended after the auth frame (request body), e.g. 0801")
     parser.add_argument("--no-wake", action="store_true",
                         help="Don't send active_robot_publish first")
     args = parser.parse_args()
@@ -114,7 +117,10 @@ def main() -> None:
             time.sleep(2)
 
         print(f"Sending {args.topic} ...")
-        resp = mq.send_command(args.topic, auth_payload(user_uuid), wait=args.wait)
+        payload = auth_payload(user_uuid) + bytes.fromhex(args.extra)
+        if args.extra:
+            print(f"Request body (after auth frame): {args.extra}")
+        resp = mq.send_command(args.topic, payload, wait=args.wait)
     finally:
         mq.disconnect()
 
