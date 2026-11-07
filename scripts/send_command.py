@@ -14,6 +14,7 @@ commands while in deep sleep.  Use --no-wake to skip that.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import time
 
@@ -88,11 +89,19 @@ def main() -> None:
                         help="Don't send active_robot_publish first")
     args = parser.parse_args()
 
+    if "/" not in args.topic:
+        print(f"WARNING: '{args.topic}' has no category prefix — did you mean "
+              f"'common/{args.topic}'? (e.g. common/reboot, config/get)")
+
     cfg = get_config()
+    if not re.fullmatch(r"[0-9a-fA-F]{32}", cfg["device_id"]):
+        print("WARNING: NARWAL_DEVICE_ID should be the 32-char hex MQTT device "
+              "name (HA config entry 'device_name'), not the cloud device ID.")
     user_uuid, token = cloud_login(cfg)
 
     mq = NarwalMQTT(cfg, user_uuid, token)
     mq.connect()
+    print(f"Connected to {cfg['mqtt_host']} | base topic {mq.base}")
 
     try:
         if not args.no_wake:
