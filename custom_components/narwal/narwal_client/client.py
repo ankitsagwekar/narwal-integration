@@ -445,14 +445,28 @@ class NarwalClient:
     async def locate(self) -> CommandResponse:
         return await self.send_command(TOPIC_CMD_YELL)
 
-    async def shutdown(self) -> None:
+    async def shutdown(self) -> CommandResponse | None:
         """Power off the vacuum.
 
-        Fire-and-forget: the robot powers down and may not reply. Once off it
-        drops off MQTT and must be powered on again with its physical button.
+        Wakes the vacuum first (it ignores commands in deep sleep), then sends
+        common/shutdown and waits briefly for a reply.  Returns the response,
+        or None if none arrived — the robot may power down before answering.
+        Once off it leaves MQTT and must be powered on with its physical button.
         """
-        await self.send_command_no_response(TOPIC_CMD_SHUTDOWN)
-        _LOGGER.info("Sent shutdown command")
+        await self.notify_active()
+        await asyncio.sleep(2)
+        try:
+            resp = await self.send_command(TOPIC_CMD_SHUTDOWN, timeout=5.0)
+        except NarwalCommandError:
+            _LOGGER.warning(
+                "No response to shutdown — vacuum may have powered off, "
+                "or ignored it (asleep / docked)"
+            )
+            return None
+        _LOGGER.info(
+            "Shutdown response: code=%s raw=%s", resp.result_code, resp.raw.hex(),
+        )
+        return resp
 
     def _build_clean_payload(
         self,

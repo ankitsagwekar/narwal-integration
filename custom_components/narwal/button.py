@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import NarwalConfigEntry
@@ -85,4 +86,9 @@ class NarwalShutdownButton(NarwalEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Send common/shutdown to power off the vacuum."""
-        await self.coordinator.client.shutdown()
+        resp = await self.coordinator.client.shutdown()
+        if resp is not None and not resp.success:
+            raise HomeAssistantError(
+                f"Vacuum refused shutdown (code={resp.result_code}). "
+                "It may not power off while docked or charging."
+            )
