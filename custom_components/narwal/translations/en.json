@@ -55,9 +55,6 @@
       "wake": {
         "name": "Wake"
       },
-      "shutdown": {
-        "name": "Shut down"
-      },
       "reboot": {
         "name": "Reboot"
       }

@@ -27,7 +27,6 @@ async def async_setup_entry(
         NarwalLocateButton(coordinator),
         NarwalWakeButton(coordinator),
         NarwalRebootButton(coordinator),
-        NarwalShutdownButton(coordinator),
     ])
 
 
@@ -86,31 +85,4 @@ class NarwalRebootButton(NarwalEntity, ButtonEntity):
         if resp is not None and not resp.success:
             raise HomeAssistantError(
                 f"Vacuum refused reboot (code={resp.result_code})."
-            )
-
-
-class NarwalShutdownButton(NarwalEntity, ButtonEntity):
-    """Power off the vacuum (counterpart to the wake button).
-
-    After shutdown the robot leaves MQTT entirely; it must be powered on
-    again with its physical power button — the wake button cannot revive it.
-    """
-
-    _attr_translation_key = "shutdown"
-    _attr_icon = "mdi:power-off"
-    _attr_entity_registry_enabled_default = False
-
-    def __init__(self, coordinator: NarwalCoordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = (
-            f"{coordinator.config_entry.data['device_name']}_shutdown"
-        )
-
-    async def async_press(self) -> None:
-        """Send common/shutdown to power off the vacuum."""
-        resp = await self.coordinator.client.shutdown()
-        if resp is not None and not resp.success:
-            raise HomeAssistantError(
-                f"Vacuum refused shutdown (code={resp.result_code}). "
-                "It may not power off while docked or charging."
             )

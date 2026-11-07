@@ -32,7 +32,6 @@ from .const import (
     TOPIC_CMD_RESUME,
     TOPIC_CMD_SET_FAN_LEVEL,
     TOPIC_CMD_SET_MOP_HUMIDITY,
-    TOPIC_CMD_SHUTDOWN,
     TOPIC_CMD_START_CLEAN,
     TOPIC_CMD_START_PLAN,
     TOPIC_CMD_YELL,
@@ -465,29 +464,6 @@ class NarwalClient:
             return None
         _LOGGER.info(
             "Reboot response: code=%s raw=%s", resp.result_code, resp.raw.hex(),
-        )
-        return resp
-
-    async def shutdown(self) -> CommandResponse | None:
-        """Power off the vacuum.
-
-        Wakes the vacuum first (it ignores commands in deep sleep), then sends
-        common/shutdown and waits briefly for a reply.  Returns the response,
-        or None if none arrived — the robot may power down before answering.
-        Once off it leaves MQTT and must be powered on with its physical button.
-        """
-        await self.notify_active()
-        await asyncio.sleep(2)
-        try:
-            resp = await self.send_command(TOPIC_CMD_SHUTDOWN, timeout=5.0)
-        except NarwalCommandError:
-            _LOGGER.warning(
-                "No response to shutdown — vacuum may have powered off, "
-                "or ignored it (asleep / docked)"
-            )
-            return None
-        _LOGGER.info(
-            "Shutdown response: code=%s raw=%s", resp.result_code, resp.raw.hex(),
         )
         return resp
 
