@@ -31,6 +31,7 @@ from .const import (
     TOPIC_CMD_RESUME,
     TOPIC_CMD_SET_FAN_LEVEL,
     TOPIC_CMD_SET_MOP_HUMIDITY,
+    TOPIC_CMD_SHUTDOWN,
     TOPIC_CMD_START_CLEAN,
     TOPIC_CMD_START_PLAN,
     TOPIC_CMD_YELL,
@@ -443,6 +444,15 @@ class NarwalClient:
 
     async def locate(self) -> CommandResponse:
         return await self.send_command(TOPIC_CMD_YELL)
+
+    async def shutdown(self) -> None:
+        """Power off the vacuum.
+
+        Fire-and-forget: the robot powers down and may not reply. Once off it
+        drops off MQTT and must be powered on again with its physical button.
+        """
+        await self.send_command_no_response(TOPIC_CMD_SHUTDOWN)
+        _LOGGER.info("Sent shutdown command")
 
     def _build_clean_payload(
         self,

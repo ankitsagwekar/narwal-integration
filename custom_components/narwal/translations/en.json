@@ -54,6 +54,9 @@
       },
       "wake": {
         "name": "Wake"
+      },
+      "shutdown": {
+        "name": "Shut down"
       }
     },
     "camera": {
